@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/rabbit
+	http://www.springframework.org/schema/rabbit/spring-rabbit-1.2.xsd">
+
+	<rabbit:connection-factory id="connectionFactory"
+		publisher-confirms="true" publisher-returns="true" />
+
+	<rabbit:template id="amqpTemplate" connection-factory="connectionFactory"
+		exchange="myExchange" routing-key="sport.ball.basketball" mandatory="true"
+		confirm-callback="confirmCallback" return-callback="returnedCallback" message-converter="jsonConverter"/>
+
+	<rabbit:admin connection-factory="connectionFactory" />
+
+	<rabbit:queue name="myQueue" />
+
+	<rabbit:topic-exchange name="myExchange">
+		<rabbit:bindings>
+			<rabbit:binding queue="myQueue" pattern="sport.ball.*" />
+		</rabbit:bindings>
+	</rabbit:topic-exchange>
+
+	<rabbit:listener-container
+		connection-factory="connectionFactory">
+		<rabbit:listener ref="foo" 
+			queue-names="myQueue" method="onReceive"/>
+	</rabbit:listener-container>
+
+	<bean id="foo" class="com.answer1991.rabbitmq.spring.listener.Listener"></bean>
+	
+	<bean id="returnedCallback" class="com.answer1991.rabbitmq.spring.TestReturnCallBack"></bean>
+	<bean id="confirmCallback" class="com.answer1991.rabbitmq.spring.TestPublishConfirm"></bean>
+
+	<bean id="objectMapper" class="com.answer1991.rabbitmq.spring.ObjectMapperFactory"></bean>
+	
+	<bean id="jsonConverter" class="org.springframework.amqp.support.converter.Jackson2JsonMessageConverter">
+		<property name="jsonObjectMapper" ref="objectMapper"></property>
+	</bean>
+</beans>

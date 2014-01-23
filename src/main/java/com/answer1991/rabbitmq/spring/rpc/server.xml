@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/rabbit
+	http://www.springframework.org/schema/rabbit/spring-rabbit-1.2.xsd">
+	
+	<bean id="rpcListener" class="org.springframework.amqp.remoting.service.AmqpInvokerServiceExporter">
+		<property name="amqpTemplate" ref="amqpTemplate"></property>
+		<property name="serviceInterface" value="com.answer1991.rabbitmq.spring.rpc.AccountService"></property>
+		<property name="service" ref="service"></property>
+	</bean>
+	
+	<bean id="service" class="com.answer1991.rabbitmq.spring.rpc.AccountServiceImpl"></bean>
+
+	<rabbit:connection-factory id="connectionFactory"
+		publisher-confirms="true" publisher-returns="true" />
+
+	<rabbit:template id="amqpTemplate" connection-factory="connectionFactory" />
+
+	<rabbit:admin connection-factory="connectionFactory" />
+
+	<rabbit:queue name="queue.rpc.account" />
+
+	<rabbit:listener-container
+		connection-factory="connectionFactory">
+		<rabbit:listener ref="rpcListener" 
+			queue-names="queue.rpc.account"/>
+	</rabbit:listener-container>
+</beans>

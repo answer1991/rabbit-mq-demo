@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/rabbit
+	http://www.springframework.org/schema/rabbit/spring-rabbit-1.2.xsd">
+	
+	<context:annotation-config />
+	
+	<bean id="rpcProxy"
+		class="org.springframework.amqp.remoting.client.AmqpProxyFactoryBean">
+		<property name="amqpTemplate" ref="amqpTemplate"></property>
+		<property name="serviceInterface"
+			value="com.answer1991.rabbitmq.spring.rpc.AccountService"></property>
+	</bean>
+
+	<bean class="com.answer1991.rabbitmq.spring.rpc.AccountServiceClient">
+		<property name="service" ref="rpcProxy"></property>
+	</bean>
+
+	<rabbit:connection-factory id="connectionFactory" />
+
+	<rabbit:template id="amqpTemplate" connection-factory="connectionFactory" reply-timeout="2000"
+		exchange="rpcExchange" routing-key="rpc.account" />
+
+	<rabbit:admin connection-factory="connectionFactory" />
+
+	<rabbit:queue name="queue.rpc.account" />
+
+	<rabbit:direct-exchange name="rpcExchange">
+		<rabbit:bindings>
+			<rabbit:binding queue="queue.rpc.account" key="rpc.account" />
+		</rabbit:bindings>
+	</rabbit:direct-exchange>
+</beans>
